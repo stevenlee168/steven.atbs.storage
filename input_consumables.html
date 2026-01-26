@@ -104,9 +104,9 @@
             color: white;
         }
 
-        /* ===== LANGUAGE SWITCH (STANDARD – FIXED) ===== */
+        /* ===== LANGUAGE SWITCH ===== */
         .lang-switch {
-            position: fixed;          /* 🔒 SAME AS INDEX */
+            position: fixed;
             top: 15px;
             right: 20px;
             display: flex;
@@ -141,8 +141,8 @@
         }
 
         .slider:before {
-            content: "";
             position: absolute;
+            content: "";
             height: 18px;
             width: 18px;
             left: 3px;
@@ -172,17 +172,16 @@
                 border-radius: 0;
             }
 
-            .form-container {
-                width: 90%;
-                padding: 20px;
-            }
-
-            .form-actions {
+            .controls {
                 flex-direction: column;
+                align-items: center;
+                gap: 30px;
             }
 
-            button {
-                width: 100%;
+            button,
+            .placeholder {
+                width: 90%;
+                max-width: 320px;
             }
         }
     </style>
@@ -191,7 +190,7 @@
 
 <body>
 
-    <!-- ===== BANNER ===== -->
+   <!-- ===== BANNER ===== -->
     <div class="banner">
         Inventory Management System
         <div class="credit">&copy; Steven Lee - Email: leechunju1608@gmail.com</div>
@@ -237,7 +236,7 @@
         </div>
 
         <div class="form-actions">
-            <button onclick="saveConsumable()" data-i18n="save"></button>
+            <button onclick="sendConsumable()" data-i18n="send"></button>
             <button onclick="location.href='index.html'" data-i18n="back"></button>
         </div>
     </div>
@@ -253,7 +252,7 @@
                 qty: "Quantity",
                 date: "Import Date",
                 by: "Imported By",
-                save: "Save",
+                send: "Send",
                 back: "Back"
             },
             zh: {
@@ -263,7 +262,7 @@
                 qty: "數量",
                 date: "入庫日期",
                 by: "入庫人員",
-                save: "儲存",
+                send: "送出",
                 back: "返回"
             }
         };
@@ -292,14 +291,18 @@
             });
         }
 
-        /* ===== SAVE CONSUMABLE ===== */
-        function saveConsumable() {
+        /* ===== SEND CONSUMABLE ===== */
+        function sendConsumable() {
             const data = {
                 code: document.getElementById("code").value.trim(),
                 name: document.getElementById("name").value.trim(),
                 qty: Number(document.getElementById("qty").value),
                 date: document.getElementById("date").value,
-                by: document.getElementById("by").value.trim()
+                by: document.getElementById("by").value.trim(),
+
+                // 🔥 CỰC KỲ QUAN TRỌNG
+                status: "pending",
+                createdAt: new Date().toISOString()
             };
 
             if (!data.code || !data.name || !data.qty) {
@@ -313,7 +316,7 @@
                 return;
             }
 
-            window.saveConsumableToDB(data);
+            window.sendConsumableToDB(data);
         }
 
         /* ===== INIT ===== */
@@ -347,13 +350,12 @@
         console.log("🔥 Firebase connected", app);
 
         // expose to normal JS
-        window.saveConsumableToDB = async function (data) {
+        window.sendConsumableToDB = async function (data) {
             try {
-              await addDoc(collection(db, "consumables"), data);
-              alert("✅ Saved to Firestore!");
+                await addDoc(collection(db, "consumables"), data);
+                alert("📨 Sent for approval!");
             } catch (e) {
-              // console.error(e);
-              alert("❌ Save failed");
+                alert("❌ Send failed");
             }
         }
 
