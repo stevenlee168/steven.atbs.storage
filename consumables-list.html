@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Consumables Inventory</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding-top: 80px;
+            background-color: #f4f4f4;
+            text-align: center;
+        }
+
+        /* ===== BANNER ===== */
+        .banner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: #4273c3;
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+            padding: 15px 20px;
+            z-index: 1000;
+            border-bottom-left-radius: 20px;
+            border-bottom-right-radius: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            text-align: left;
+        }
+
+        .credit {
+            font-size: 12px;
+            font-weight: normal;
+            color: #ddd;
+            margin-top: 5px;
+        }
+
+        h2 {
+            margin-bottom: 25px;
+            color: #333;
+            min-height: 40px; /* MATCH STANDARD */
+        }
+
+        /* ===== TABLE ===== */
+        .table-container {
+            max-width: 1000px;
+            margin: auto;
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;   /* ⭐ CHỐT */
+        }
+
+        th, td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        th {
+            background-color: #f0f4ff;
+            color: #333;
+            height: 46px;              /* ⭐ KHÓA CHIỀU CAO */
+            vertical-align: middle;
+            white-space: nowrap;       /* ⭐ KHÔNG WRAP */
+        }
+
+        tr:hover {
+            background-color: #f9f9f9;
+        }
+
+        .actions {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 10px 18px;
+            border-radius: 20px;
+            border: 2px solid #007bff;
+            background: white;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background: #007bff;
+            color: white;
+        }
+
+        /* ===== LANGUAGE SWITCH ===== */
+        .lang-switch {
+            position: fixed;
+            top: 15px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 2000;
+            font-weight: bold;
+            color: white;
+        }
+
+        .switch {
+            position: relative;
+            display: block;
+            width: 46px;
+            height: 24px;
+            flex-shrink: 0;   
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            inset: 0;
+            background-color: #ccc;
+            border-radius: 34px;
+            transition: 0.3s;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            border-radius: 50%;
+            transition: 0.3s;
+        }
+
+        input:checked + .slider {
+            background-color: #007bff;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(22px);
+        }
+
+        .filter-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .filter-bar input {
+            flex: 1;
+            padding: 8px 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+        }
+
+
+        th:nth-child(1), td:nth-child(1) { width: 15%; }
+        th:nth-child(2), td:nth-child(2) { width: 30%; }
+        th:nth-child(3), td:nth-child(3) { width: 10%; text-align: center; }
+        th:nth-child(4), td:nth-child(4) { width: 15%; }
+        th:nth-child(5), td:nth-child(5) { width: 30%; }
+
+
+        /* ===== MOBILE ===== */
+        @media (max-width: 480px) {
+            body {
+                padding-top: 70px;
+            }
+
+            .banner {
+                font-size: 16px;
+                padding: 10px 15px;
+                border-radius: 0;
+            }
+
+            .controls {
+                flex-direction: column;
+                align-items: center;
+                gap: 30px;
+            }
+
+            button,
+            .placeholder {
+                width: 90%;
+                max-width: 320px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="banner">
+        Inventory Management System
+        <div class="credit">&copy; Steven Lee - Email: leechunju1608@gmail.com</div>
+
+        <div class="lang-switch">
+            <span>EN</span>
+            <label class="switch">
+                <input type="checkbox" id="langToggle">
+                <span class="slider"></span>
+            </label>
+            <span>中</span>
+        </div>
+    </div>
+
+    <h2 data-i18n="title"></h2>
+
+    <div class="table-container">
+        <div class="filter-bar">
+            <input type="text" id="filterCode" data-i18n-placeholder="th_code"> 
+            <input type="text" id="filterName" data-i18n-placeholder="th_name">
+            <input type="text" id="filterBy" data-i18n-placeholder="th_by">
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th data-i18n="th_code"></th>
+                    <th data-i18n="th_name"></th>
+                    <th data-i18n="th_qty"></th>
+                    <th data-i18n="th_date"></th>
+                    <th data-i18n="th_by"></th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <tr>
+                    <td colspan="5">Loading...</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="actions">
+            <button onclick="location.href='index.html'" data-i18n="back"></button>
+        </div>
+    </div>
+
+    <!-- ===== FIREBASE ===== -->
+    <script>
+        const translations = {
+            en: {
+                title: "Consumables Inventory",
+                th_code: "Item Code",
+                th_name: "Item Name",
+                th_qty: "Quantity",
+                th_date: "Date",
+                th_by: "Imported By",
+                // cf_by: "Confirmed By",
+                back:"Back"
+            },
+            zh: {
+                title: "耗材庫存",
+                th_code: "物料編號",
+                th_name: "物料名稱",
+                th_qty: "數量",
+                th_date: "日期",
+                th_by: "入庫人員",
+                // cf_by: "確認人員",
+                back:"返回"
+            }
+        };
+
+        /* ===== LANGUAGE CORE ===== */
+        function setLanguage(lang, save = true) {
+            if (save) {
+                localStorage.setItem("lang", lang);
+            }
+
+            document.querySelectorAll("[data-i18n]").forEach(el => {
+                const key = el.dataset.i18n;
+                el.innerText = translations[lang][key] || "";
+            });
+
+            /* PLACEHOLDER */
+            document.querySelectorAll("[data-i18n-placeholder]").forEach(el => {
+                const key = el.dataset.i18nPlaceholder;
+                el.placeholder = translations[lang][key] || "";
+            });
+        }
+
+        function initLanguage() {
+            const savedLang = localStorage.getItem("lang") || "en";
+            setLanguage(savedLang, false);
+
+            const toggle = document.getElementById("langToggle");
+            toggle.checked = savedLang === "zh";
+
+            toggle.addEventListener("change", e => {
+                setLanguage(e.target.checked ? "zh" : "en");
+            });
+        }
+
+        /* ===== INIT ===== */
+        document.addEventListener("DOMContentLoaded", () => {
+            initLanguage();
+        });
+    </script>
+    
+    <script type="module">
+        let allConsumables = [];
+
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, query, orderBy } 
+            from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyA7zpEseZx9x_hiPcRHtp4h-All7CL-Dog",
+            authDomain: "atbs-inventory.firebaseapp.com",
+            projectId: "atbs-inventory",
+            storageBucket: "atbs-inventory.firebasestorage.app",
+            messagingSenderId: "196392830940",
+            appId: "1:196392830940:web:e49a096fb56ac6a58cf119"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const tableBody = document.getElementById("tableBody");
+
+        const filterCode = document.getElementById("filterCode");
+        const filterName = document.getElementById("filterName");
+        const filterBy   = document.getElementById("filterBy");
+
+        /* ===== LOAD DATA ===== */
+        async function loadConsumables() {
+            tableBody.innerHTML = "<tr><td colspan='5'>Loading...</td></tr>";
+
+            try {
+                const q = query(
+                    collection(db, "consumables"),
+                    orderBy("date", "desc")
+                );
+
+                const snapshot = await getDocs(q);
+                allConsumables = [];
+
+                snapshot.forEach(doc => {
+                    allConsumables.push(doc.data());
+                });
+
+                renderTable(allConsumables);
+
+            } catch (e) {
+                console.error(e);
+                tableBody.innerHTML =
+                    "<tr><td colspan='5'>Load failed</td></tr>";
+            }
+        }
+
+        /* ===== RENDER ===== */
+        function renderTable(data) {
+            tableBody.innerHTML = "";
+
+            if (data.length === 0) {
+                tableBody.innerHTML =
+                    "<tr><td colspan='5'>No data</td></tr>";
+                return;
+            }
+
+            data.forEach(d => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td>${d.code || ""}</td>
+                    <td>${d.name || ""}</td>
+                    <td>${d.qty || 0}</td>
+                    <td>${d.date || ""}</td>
+                    <td>${d.by || ""}</td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        }
+
+        /* ===== FILTER ===== */
+        function applyFilter() {
+            const codeVal = filterCode.value.toLowerCase();
+            const nameVal = filterName.value.toLowerCase();
+            const byVal   = filterBy.value.toLowerCase();
+
+            const filtered = allConsumables.filter(d => {
+                return (
+                    (!codeVal || (d.code || "").toLowerCase().includes(codeVal)) &&
+                    (!nameVal || (d.name || "").toLowerCase().includes(nameVal)) &&
+                    (!byVal   || (d.by   || "").toLowerCase().includes(byVal))
+                );
+            });
+
+            renderTable(filtered);
+        }
+
+        /* ===== EVENTS ===== */
+        filterCode.addEventListener("input", applyFilter);
+        filterName.addEventListener("input", applyFilter);
+        filterBy.addEventListener("input", applyFilter);
+
+        loadConsumables();
+
+        
+    </script>
+
+</body>
+</html>
