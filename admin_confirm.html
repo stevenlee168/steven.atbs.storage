@@ -176,33 +176,6 @@ button:hover {
 </div>
 
     <script type="module">
-        import { USERS } from "./auth.js";
-
-        /* ===== LOGIN ===== */
-        function checkLogin() {
-            if (!localStorage.getItem("adminLogin")) {
-                document.getElementById("loginBox").style.display = "flex";
-                throw new Error("Not logged in");
-            }
-        }
-
-        window.login = () => {
-            const u = document.getElementById("loginUser").value.trim();
-            const p = document.getElementById("loginPass").value;
-
-            const ok = USERS.find(x => x.username === u && x.password === p);
-
-            if (!ok) {
-                alert("❌ Invalid login");
-                return;
-            }
-
-            localStorage.setItem("adminLogin", u);
-            document.getElementById("loginBox").style.display = "none";
-            location.reload();
-        };
-
-        checkLogin();
 
         /* ===== FIREBASE ===== */
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
