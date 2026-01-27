@@ -113,6 +113,35 @@ button:hover {
 
 <body>
 
+<div id="loginBox" style="
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+">
+    <div style="
+        background: white;
+        padding: 30px;
+        border-radius: 16px;
+        width: 320px;
+        box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+    ">
+        <h3>Admin Login</h3>
+
+        <input id="loginUser" placeholder="Username"
+               style="width:100%; padding:10px; margin-bottom:10px;">
+
+        <input id="loginPass" type="password" placeholder="Password"
+               style="width:100%; padding:10px; margin-bottom:15px;">
+
+        <button onclick="login()">Login</button>
+    </div>
+</div>
+
+
 <div class="banner">
     Inventory Management System
     <div class="credit">&copy; Steven Lee</div>
@@ -147,6 +176,35 @@ button:hover {
 </div>
 
     <script type="module">
+        import { USERS } from "./auth.js";
+
+        /* ===== LOGIN ===== */
+        function checkLogin() {
+            if (!localStorage.getItem("adminLogin")) {
+                document.getElementById("loginBox").style.display = "flex";
+                throw new Error("Not logged in");
+            }
+        }
+
+        window.login = () => {
+            const u = document.getElementById("loginUser").value.trim();
+            const p = document.getElementById("loginPass").value;
+
+            const ok = USERS.find(x => x.username === u && x.password === p);
+
+            if (!ok) {
+                alert("❌ Invalid login");
+                return;
+            }
+
+            localStorage.setItem("adminLogin", u);
+            document.getElementById("loginBox").style.display = "none";
+            location.reload();
+        };
+
+        checkLogin();
+
+        /* ===== FIREBASE ===== */
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
         import {
             getFirestore,
@@ -154,12 +212,10 @@ button:hover {
             getDocs,
             query,
             where,
-            orderBy,
             doc,
             updateDoc
         } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
-        /* ===== FIREBASE ===== */
         const firebaseConfig = {
             apiKey: "AIzaSyA7zpEseZx9x_hiPcRHtp4h-All7CL-Dog",
             authDomain: "atbs-inventory.firebaseapp.com",
@@ -179,14 +235,10 @@ button:hover {
 
         let allData = [];
 
-        /* ===== LOAD PENDING ===== */
         async function loadPending() {
-            tableBody.innerHTML = "<tr><td colspan='6'>Loading...</td></tr>";
-
             const q = query(
                 collection(db, "consumables"),
-                where("status", "==", "pending"),
-                orderBy("createdAt", "desc")
+                where("status", "==", "pending")
             );
 
             const snap = await getDocs(q);
@@ -199,7 +251,6 @@ button:hover {
             render(allData);
         }
 
-        /* ===== RENDER ===== */
         function render(data) {
             tableBody.innerHTML = "";
 
@@ -226,7 +277,6 @@ button:hover {
             });
         }
 
-        /* ===== FILTER ===== */
         function applyFilter() {
             const c = filterCode.value.toLowerCase();
             const n = filterName.value.toLowerCase();
@@ -243,31 +293,25 @@ button:hover {
         filterName.addEventListener("input", applyFilter);
         filterBy.addEventListener("input", applyFilter);
 
-        /* ===== ACTIONS ===== */
         window.approve = async id => {
-            if (!confirm("Approve this request?")) return;
-
             await updateDoc(doc(db, "consumables", id), {
                 status: "approved",
-                approvedAt: new Date().toISOString(),
-                approvedBy: "ADMIN"
+                approvedBy: localStorage.getItem("adminLogin"),
+                approvedAt: new Date().toISOString()
             });
-
             loadPending();
         };
 
         window.reject = async id => {
-            if (!confirm("Reject this request?")) return;
-
             await updateDoc(doc(db, "consumables", id), {
                 status: "rejected"
             });
-
             loadPending();
         };
 
         loadPending();
     </script>
+
 
 </body>
 </html>
