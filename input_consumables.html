@@ -227,12 +227,17 @@
 
         <div class="form-group">
             <label data-i18n="date"></label>
-            <input type="date" id="date">
+            <input type="date" id="date" onkeydown="return false">
         </div>
 
         <div class="form-group">
             <label data-i18n="by"></label>
             <input type="text" id="by">
+        </div>
+
+        <div class="form-group">
+            <label data-i18n="location"></label>
+            <input type="text" id="location">
         </div>
 
         <div class="form-actions">
@@ -253,7 +258,8 @@
                 date: "Import Date",
                 by: "Imported By",
                 send: "Send",
-                back: "Back"
+                back: "Back",
+                location: "Location",
             },
             zh: {
                 title: "耗材入庫",
@@ -263,7 +269,8 @@
                 date: "入庫日期",
                 by: "入庫人員",
                 send: "送出",
-                back: "返回"
+                back: "返回",
+                location: "存放位置",
             }
         };
 
@@ -293,38 +300,85 @@
 
         /* ===== SEND CONSUMABLE ===== */
         function sendConsumable() {
-            const data = {
-                code: document.getElementById("code").value.trim(),
-                name: document.getElementById("name").value.trim(),
-                qty: Number(document.getElementById("qty").value),
-                date: document.getElementById("date").value,
-                by: document.getElementById("by").value.trim(),
+            const code = document.getElementById("code").value.trim();
+            const name = document.getElementById("name").value.trim();
+            const qty  = Number(document.getElementById("qty").value);
+            const date = document.getElementById("date").value;
+            const by   = document.getElementById("by").value.trim();
+            const location = document.getElementById("location").value.trim();
 
-                // 🔥 CỰC KỲ QUAN TRỌNG
-                status: "pending",
-                createdAt: new Date().toISOString()
-            };
-
-            if (!data.code || !data.name || !data.qty) {
+            if (!code || !name || !location || !qty || qty <= 0 || !by) {
                 alert("Please fill required fields");
                 return;
             }
 
-            // 🔥 GỌI FIRESTORE
-            if (typeof window.saveConsumableToDB !== "function") {
-                alert("❌ Firestore not ready");
-                return;
-            }
+            const request = {
+                type: "IMPORT",
+                requestType: "CONSUMABLE",
 
-            window.sendConsumableToDB(data);
+                code,
+                name,
+                qty,
+
+                status: "pending",
+
+                requestedBy: by,
+                approvedBy: null,
+                rejectedBy: null,
+
+                createdAt: getVNDateString(),
+                approvedAt: null,
+                rejectedAt: null,
+                location
+            };
+
+            window.sendRequestToDB(request);
         }
+
 
         /* ===== INIT ===== */
         document.addEventListener("DOMContentLoaded", () => {
             initLanguage();
+            const dateInput = document.getElementById("date");
+            const todayVN = getTodayVN();
+
             document.getElementById("date").value =
                 new Date().toISOString().split("T")[0];
+            dateInput.value = todayVN;
+            dateInput.max = todayVN;
         });
+
+        function getVNDateString() {
+            // const now = new Date();
+            const parts = new Intl.DateTimeFormat("en-CA", {
+            timeZone: "Asia/Ho_Chi_Minh",
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+            hour12: false
+          }).formatToParts(new Date());
+
+          const get = t => parts.find(p => p.type === t).value;
+
+          return `${get("year")}/${get("month")}/${get("day")} ${get("hour")}:${get("minute")}:${get("second")}`;
+        }
+        
+
+        function getTodayVN() {
+            const now = new Date();
+            const vn = new Date(now.getTime() + 7 * 60 * 60 * 1000);
+
+            const y = vn.getUTCFullYear();
+            const m = String(vn.getUTCMonth() + 1).padStart(2, "0");
+            const d = String(vn.getUTCDate()).padStart(2, "0");
+
+            return `${y}-${m}-${d}`;
+        }
+
+
     </script>
 
     <script type="module">
@@ -350,14 +404,16 @@
         console.log("🔥 Firebase connected", app);
 
         // expose to normal JS
-        window.sendConsumableToDB = async function (data) {
+        window.sendRequestToDB = async function (request) {
             try {
-                await addDoc(collection(db, "consumables"), data);
-                alert("📨 Sent for approval!");
+                await addDoc(collection(db, "requests"), request);
+                alert("📨 Import request sent to admin!");
             } catch (e) {
+                console.error(e);
                 alert("❌ Send failed");
             }
-        }
+        };
+
 
     </script>
 

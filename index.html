@@ -1,360 +1,384 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Inventory Management</title>
+    <head>
+        <meta charset="UTF-8" />
+        <title>Inventory Management</title>
 
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding-top: 80px;
-            background-color: #f4f4f4;
-            text-align: center;
-        }
-
-        /* ===== BANNER ===== */
-        .banner {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            background-color: #4273c3;
-            color: white;
-            font-size: 20px;
-            font-weight: bold;
-            padding: 15px 20px;
-            z-index: 1000;
-            border-bottom-left-radius: 20px;
-            border-bottom-right-radius: 20px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-            text-align: left;
-        }
-
-        .credit {
-            font-size: 12px;
-            font-weight: normal;
-            color: #ddd;
-            margin-top: 5px;
-        }
-
-        h2 {
-            margin-bottom: 30px;
-            color: #333;
-            min-height: 40px;
-            transition: all 0.2s ease;
-        }
-
-        /* ===== BUTTON AREA ===== */
-        .controls {
-            display: flex;
-            justify-content: center;
-            gap: 40px;
-            flex-wrap: wrap;
-        }
-
-        .button-box {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        button {
-            padding: 12px 20px;
-            font-size: 16px;
-            border: 2px solid #007bff;
-            background-color: white;
-            border-radius: 25px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: background-color 0.3s ease, color 0.3s ease;
-
-            /* 🔒 FIX LAYOUT JUMP */
-            width: 220px;
-            height: 50px;
-            line-height: 1.2;
-            white-space: normal;
-            text-align: center;
-        }
-
-        button:hover {
-            background-color: #007bff;
-            color: white;
-        }
-
-        .placeholder {
-            width: 220px;
-            height: 160px;
-            background-color: white;
-            border: 2px solid #007bff;
-            border-radius: 20px;
-            margin-top: 15px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
-            color: #007bff;
-            font-weight: bold;
-            text-align: center;
-            padding: 10px;
-            box-sizing: border-box;
-            line-height: 1.3;
-
-            transition: all 0.2s ease;
-        }
-
-        /* ===== LANGUAGE SWITCH ===== */
-        .lang-switch {
-            position: fixed;
-            top: 15px;
-            right: 20px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            z-index: 2000;
-            font-weight: bold;
-            color: white;
-        }
-
-        .switch {
-            position: relative;
-            display: block;
-            width: 46px;
-            height: 24px;
-            flex-shrink: 0;   
-        }
-
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            inset: 0;
-            background-color: #ccc;
-            border-radius: 34px;
-            transition: 0.3s;
-        }
-
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 18px;
-            width: 18px;
-            left: 3px;
-            bottom: 3px;
-            background-color: white;
-            border-radius: 50%;
-            transition: 0.3s;
-        }
-
-        input:checked + .slider {
-            background-color: #007bff;
-        }
-
-        input:checked + .slider:before {
-            transform: translateX(22px);
-        }
-
-        /* ===== MOBILE ===== */
-        @media (max-width: 480px) {
+        <style>
             body {
-                padding-top: 70px;
+                font-family: Arial, sans-serif;
+                margin: 0;
+                padding-top: 80px;
+                background-color: #f4f4f4;
+                text-align: center;
             }
 
+            /* ===== BANNER ===== */
             .banner {
-                font-size: 16px;
-                padding: 10px 15px;
-                border-radius: 0;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                background-color: #4273c3;
+                color: white;
+                font-size: 20px;
+                font-weight: bold;
+                padding: 15px 20px;
+                z-index: 1000;
+                border-bottom-left-radius: 20px;
+                border-bottom-right-radius: 20px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+                text-align: left;
             }
 
+            .credit {
+                font-size: 12px;
+                font-weight: normal;
+                color: #ddd;
+                margin-top: 5px;
+            }
+
+            h2 {
+                margin-bottom: 30px;
+                color: #333;
+                min-height: 40px;
+                transition: all 0.2s ease;
+            }
+
+            /* ===== BUTTON AREA ===== */
             .controls {
+                display: flex;
+                justify-content: center;
+                gap: 40px;
+                flex-wrap: wrap;
+            }
+
+            .button-box {
+                display: flex;
                 flex-direction: column;
                 align-items: center;
-                gap: 30px;
             }
 
-            button,
+            button {
+                padding: 12px 20px;
+                font-size: 16px;
+                border: 2px solid #007bff;
+                background-color: white;
+                border-radius: 25px;
+                cursor: pointer;
+                font-weight: bold;
+                transition: background-color 0.3s ease, color 0.3s ease;
+
+                /* 🔒 FIX LAYOUT JUMP */
+                width: 220px;
+                height: 50px;
+                line-height: 1.2;
+                white-space: normal;
+                text-align: center;
+            }
+
+            button:hover {
+                background-color: #007bff;
+                color: white;
+            }
+
             .placeholder {
-                width: 90%;
-                max-width: 320px;
-            }
-        }
-    </style>
-</head>
+                width: 220px;
+                height: 160px;
+                background-color: white;
+                border: 2px solid #007bff;
+                border-radius: 20px;
+                margin-top: 15px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
 
-<body>
+                display: flex;
+                align-items: center;
+                justify-content: center;
 
-    <!-- ===== BANNER ===== -->
-    <div class="banner">
-        Inventory Management System
-        <div class="credit">&copy; Steven Lee - Email: leechunju1608@gmail.com</div>
+                color: #007bff;
+                font-weight: bold;
+                text-align: center;
+                padding: 10px;
+                box-sizing: border-box;
+                line-height: 1.3;
 
-        <div class="lang-switch">
-            <span>EN</span>
-            <label class="switch">
-                <input type="checkbox" id="langToggle">
-                <span class="slider"></span>
-            </label>
-            <span>中</span>
-        </div>
-    </div>
-
-    <!-- ===== MAIN ===== -->
-    <h2 data-i18n="title_choose_function"></h2>
-
-    <div class="controls">
-
-        <div class="button-box">
-            <button onclick="location.href='input_consumables.html'"
-                    data-i18n="btn_input_consumables"></button>
-            <div class="placeholder" data-i18n="desc_input_consumables"></div>
-        </div>
-
-        <div class="button-box">
-            <button onclick="location.href='output_consumables.html'"
-                    data-i18n="btn_output_consumables"></button>
-            <div class="placeholder" data-i18n="desc_output_consumables"></div>
-        </div>
-
-        <div class="button-box">
-            <button onclick="location.href='input_tools.html'"
-                    data-i18n="btn_input_tools"></button>
-            <div class="placeholder" data-i18n="desc_input_tools"></div>
-        </div>
-
-        <div class="button-box">
-            <button onclick="location.href='output_tools.html'"
-                    data-i18n="btn_output_tools"></button>
-            <div class="placeholder" data-i18n="desc_output_tools"></div>
-        </div>
-
-        <div class="button-box">
-            <button onclick="location.href='history.html'"
-                    data-i18n="btn_history"></button>
-            <div class="placeholder" data-i18n="desc_history"></div>
-        </div>
-
-        <div class="button-box">
-            <button onclick="location.href='consumables-list.html'"
-                    data-i18n="btn_chk"></button>
-            <div class="placeholder" data-i18n="desc_chk"></div>
-        </div>
-
-        <div class="button-box">
-            <button onclick="location.href='admin_confirm.html'"
-                    data-i18n="btn_cfm"></button>
-            <div class="placeholder" data-i18n="desc_cfm"></div>
-        </div>
-
-    </div>
-    
-    <script>
-        /* ===== TRANSLATIONS ===== */
-        const translations = {
-            en: {
-                title_choose_function: "Choose a Function",
-
-                btn_input_consumables: "Import Consumables",
-                desc_input_consumables: "Import consumables into inventory",
-
-                btn_output_consumables: "Sell Consumables",
-                desc_output_consumables: "Export / sell consumables",
-
-                btn_input_tools: "Import Tools",
-                desc_input_tools: "Import tools into inventory",
-
-                btn_output_tools: "Issue Tools",
-                desc_output_tools: "Issue or export tools",
-
-                btn_history: "History",
-                desc_history: "Transaction history",
-
-                btn_chk: "Check Inventory",
-                desc_chk: "Check Inventory"
-            },
-            zh: {
-                title_choose_function: "功能選擇",
-
-                btn_input_consumables: "耗材入庫",
-                desc_input_consumables: "耗材入庫",
-
-                btn_output_consumables: "耗材出庫",
-                desc_output_consumables: "耗材出庫",
-
-                btn_input_tools: "工具入庫",
-                desc_input_tools: "工具入庫",
-
-                btn_output_tools: "工具領用 / 出庫",
-                desc_output_tools: "工具領用 / 出庫",
-
-                btn_history: "歷史紀錄",
-                desc_history: "交易歷史",
-
-                btn_chk: "檢查庫存",
-                desc_chk: "檢查庫存"
-            }
-        };
-
-        /* ===== CORE LANGUAGE ===== */
-        function setLanguage(lang, save = true) {
-            if (save) {
-                localStorage.setItem("lang", lang);
+                transition: all 0.2s ease;
             }
 
-            document.querySelectorAll("[data-i18n]").forEach(el => {
-                const key = el.dataset.i18n;
-                el.innerText = translations[lang][key] || "";
-            });
-        }
+            /* ===== LANGUAGE SWITCH ===== */
+            .lang-switch {
+                position: fixed;
+                top: 15px;
+                right: 20px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                z-index: 2000;
+                font-weight: bold;
+                color: white;
+            }
 
-        function initLanguage() {
-            const savedLang = localStorage.getItem("lang") || "en";
+            .switch {
+                position: relative;
+                display: block;
+                width: 46px;
+                height: 24px;
+                flex-shrink: 0;
+            }
 
-            setLanguage(savedLang, false);
+            .switch input {
+                opacity: 0;
+                width: 0;
+                height: 0;
+            }
 
-            const toggle = document.getElementById("langToggle");
-            toggle.checked = savedLang === "zh";
+            .slider {
+                position: absolute;
+                cursor: pointer;
+                inset: 0;
+                background-color: #ccc;
+                border-radius: 34px;
+                transition: 0.3s;
+            }
 
-            toggle.addEventListener("change", e => {
-                setLanguage(e.target.checked ? "zh" : "en");
-            });
-        }
+            .slider:before {
+                position: absolute;
+                content: "";
+                height: 18px;
+                width: 18px;
+                left: 3px;
+                bottom: 3px;
+                background-color: white;
+                border-radius: 50%;
+                transition: 0.3s;
+            }
 
-        document.addEventListener("DOMContentLoaded", initLanguage);
-    </script>
+            input:checked + .slider {
+                background-color: #007bff;
+            }
 
-    <script type="module">
+            input:checked + .slider:before {
+                transform: translateX(22px);
+            }
+
+            /* ===== MOBILE ===== */
+            @media (max-width: 480px) {
+                body {
+                    padding-top: 70px;
+                }
+
+                .banner {
+                    font-size: 16px;
+                    padding: 10px 15px;
+                    border-radius: 0;
+                }
+
+                .controls {
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 30px;
+                }
+
+                button,
+                .placeholder {
+                    width: 90%;
+                    max-width: 320px;
+                }
+            }
+        </style>
+    </head>
+
+    <body>
+        <!-- ===== BANNER ===== -->
+        <div class="banner">
+            Inventory Management System
+            <div class="credit">
+                &copy; Steven Lee - Email: leechunju1608@gmail.com
+            </div>
+
+            <div class="lang-switch">
+                <span>EN</span>
+                <label class="switch">
+                    <input type="checkbox" id="langToggle" />
+                    <span class="slider"></span>
+                </label>
+                <span>中</span>
+            </div>
+        </div>
+
+        <!-- ===== MAIN ===== -->
+        <h2 data-i18n="title_choose_function"></h2>
+
+        <div class="controls">
+            <div class="button-box">
+                <button
+                    onclick="location.href='input_consumables.html'"
+                    data-i18n="btn_input_consumables"
+                ></button>
+                <div
+                    class="placeholder"
+                    data-i18n="desc_input_consumables"
+                ></div>
+            </div>
+
+            <div class="button-box">
+                <button
+                    onclick="location.href='output_consumables.html'"
+                    data-i18n="btn_output_consumables"
+                ></button>
+                <div
+                    class="placeholder"
+                    data-i18n="desc_output_consumables"
+                ></div>
+            </div>
+
+            <div class="button-box">
+                <button
+                    onclick="location.href='input_tools.html'"
+                    data-i18n="btn_input_tools"
+                ></button>
+                <div class="placeholder" data-i18n="desc_input_tools"></div>
+            </div>
+
+            <div class="button-box">
+                <button
+                    onclick="location.href='output_tools.html'"
+                    data-i18n="btn_output_tools"
+                ></button>
+                <div class="placeholder" data-i18n="desc_output_tools"></div>
+            </div>
+
+            <div class="button-box">
+                <button
+                    onclick="location.href='history.html'"
+                    data-i18n="btn_history"
+                ></button>
+                <div class="placeholder" data-i18n="desc_history"></div>
+            </div>
+
+            <div class="button-box">
+                <button
+                    onclick="location.href='consumables-list.html'"
+                    data-i18n="btn_chk"
+                ></button>
+                <div class="placeholder" data-i18n="desc_chk"></div>
+            </div>
+
+            <div class="button-box">
+                <button
+                    onclick="location.href='admin_confirm.html'"
+                    data-i18n="btn_cfm"
+                ></button>
+                <div class="placeholder" data-i18n="desc_cfm"></div>
+            </div>
+        </div>
+
+        <script>
+            /* ===== TRANSLATIONS ===== */
+            const translations = {
+                en: {
+                    title_choose_function: "Choose a Function",
+
+                    btn_input_consumables: "Import Consumables",
+                    desc_input_consumables: "Import consumables into inventory",
+
+                    btn_output_consumables: "Sell Consumables",
+                    desc_output_consumables: "Export / sell consumables",
+
+                    btn_input_tools: "Import Tools",
+                    desc_input_tools: "Import tools into inventory",
+
+                    btn_output_tools: "Issue Tools",
+                    desc_output_tools: "Issue or export tools",
+
+                    btn_history: "History",
+                    desc_history: "Transaction history",
+
+                    btn_chk: "Check Inventory",
+                    desc_chk: "Check Inventory",
+
+                    btn_cfm:"Admin Confirm",
+                    desc_cfm:"Admin Confirm",
+                },
+                zh: {
+                    title_choose_function: "功能選擇",
+
+                    btn_input_consumables: "耗材入庫",
+                    desc_input_consumables: "耗材入庫",
+
+                    btn_output_consumables: "耗材出庫",
+                    desc_output_consumables: "耗材出庫",
+
+                    btn_input_tools: "工具入庫",
+                    desc_input_tools: "工具入庫",
+
+                    btn_output_tools: "工具領用 / 出庫",
+                    desc_output_tools: "工具領用 / 出庫",
+
+                    btn_history: "歷史紀錄",
+                    desc_history: "交易歷史",
+
+                    btn_chk: "檢查庫存",
+                    desc_chk: "檢查庫存",
+
+                    btn_cfm:"主管審核",
+                    desc_cfm:"主管審核",
+                }
+            };
+
+            /* ===== CORE LANGUAGE ===== */
+            function setLanguage(lang, save = true) {
+                if (save) {
+                    localStorage.setItem("lang", lang);
+                }
+
+                document.querySelectorAll("[data-i18n]").forEach(el => {
+                    const key = el.dataset.i18n;
+                    el.innerText = translations[lang][key] || "";
+                });
+            }
+
+            function initLanguage() {
+                const savedLang = localStorage.getItem("lang") || "en";
+
+                setLanguage(savedLang, false);
+
+                const toggle = document.getElementById("langToggle");
+                toggle.checked = savedLang === "zh";
+
+                toggle.addEventListener("change", e => {
+                    setLanguage(e.target.checked ? "zh" : "en");
+                });
+            }
+
+            document.addEventListener("DOMContentLoaded", initLanguage);
+        </script>
+
+        <script type="module">
             import { db } from "./firebase.js";
             console.log("🔥 Firestore ready", db);
-    </script>
+        </script>
 
-    <script type="module">
-      // Import the functions you need from the SDKs you need
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
-      // TODO: Add SDKs for Firebase products that you want to use
-      // https://firebase.google.com/docs/web/setup#available-libraries
+        <script type="module">
+              // Import the functions you need from the SDKs you need
+              import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+              // TODO: Add SDKs for Firebase products that you want to use
+              // https://firebase.google.com/docs/web/setup#available-libraries
 
-      // Your web app's Firebase configuration
-      const firebaseConfig = {
-        apiKey: "AIzaSyA7zpEseZx9x_hiPcRHtp4h-All7CL-Dog",
-        authDomain: "atbs-inventory.firebaseapp.com",
-        projectId: "atbs-inventory",
-        storageBucket: "atbs-inventory.firebasestorage.app",
-        messagingSenderId: "196392830940",
-        appId: "1:196392830940:web:e49a096fb56ac6a58cf119"
-      };
+              // Your web app's Firebase configuration
+              const firebaseConfig = {
+                apiKey: "AIzaSyA7zpEseZx9x_hiPcRHtp4h-All7CL-Dog",
+                authDomain: "atbs-inventory.firebaseapp.com",
+                projectId: "atbs-inventory",
+                storageBucket: "atbs-inventory.firebasestorage.app",
+                messagingSenderId: "196392830940",
+                appId: "1:196392830940:web:e49a096fb56ac6a58cf119"
+            };
 
-      // Initialize Firebase
-      const app = initializeApp(firebaseConfig);
+              // Initialize Firebase
+              const app = initializeApp(firebaseConfig);
 
-      console.log("🔥 Firebase connected", app);
-    </script>
-
-</body>
+              console.log("🔥 Firebase connected", app);
+        </script>
+    </body>
 </html>
