@@ -175,7 +175,8 @@
             th:nth-child(4),td:nth-child(4) {width: 15%;}
             th:nth-child(5),td:nth-child(5) {width: 15%;}
             th:nth-child(6),td:nth-child(6) {width: 15%;}
-            th:nth-child(7),td:nth-child(7) {width: 15%;}
+            th:nth-child(7),td:nth-child(7) {width: 10%;}
+            th:nth-child(8),td:nth-child(8) {width: 5%;}
 
             /* ===== MOBILE ===== */
             @media (max-width: 480px) {
@@ -252,21 +253,29 @@
                         <th data-i18n="th_date"></th>
                         <th data-i18n="th_by"></th>
                         <th data-i18n="th_location"></th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody id="tableBody">
                     <tr>
-                        <td colspan="7">Loading...</td>
+                        <td colspan="8">Loading...</td>
                     </tr>
                 </tbody>
             </table>
 
-            <div class="actions">
-                <button
-                    onclick="location.href='index.html'"
-                    data-i18n="back"
-                ></button>
+            <div id="pagination" style="margin-top:15px;text-align:center;">
+                <button onclick="prevPage()">◀ Prev</button>
+                <span id="pageInfo" style="margin:0 10px;"></span>
+                <button onclick="nextPage()">Next ▶</button>
             </div>
+        </div>
+
+        
+        <div class="actions">
+            <button
+                onclick="location.href='index_admin.html'"
+                data-i18n="back"
+            ></button>
         </div>
 
         <!-- ===== FIREBASE ===== -->
@@ -335,10 +344,50 @@
         </script>
 
         <script type="module">
+            // "en" | "zh"
+            const i18n = {
+                en: {
+                    moveTitle: (code, name) =>
+                        `Move "${code} - ${name}"`,
+                    currentLoc: loc =>
+                        `Current: ${loc}\nNew location:`,
+                    qtyPrompt: qty =>
+                        `Available qty: ${qty}\nEnter qty to move:`,
+                    invalidQty: "❌ Invalid quantity",
+                    confirmMove: (moveQty, totalQty, code, name, from, to) =>
+                        `Confirm move ${moveQty} / ${totalQty}\n` +
+                        `"${code} - ${name}"\n` +
+                        `From: ${from}\nTo: ${to}`,
+                    success: "✅ Location updated",
+                    noteTo: (qty, loc) => `Move ${qty} to ${loc}`,
+                    noteFrom: (qty, loc) => `Move ${qty} from ${loc}`
+                },
+
+                zh: {
+                    moveTitle: (code, name) =>
+                        `移動「${code} - ${name}」`,
+                    currentLoc: loc =>
+                        `目前位置：${loc}\n新位置：`,
+                    qtyPrompt: qty =>
+                        `可用數量：${qty}\n請輸入移動數量：`,
+                    invalidQty: "❌ 數量不正確",
+                    confirmMove: (moveQty, totalQty, code, name, from, to) =>
+                        `確認移動 ${moveQty} / ${totalQty}\n` +
+                        `「${code} - ${name}」\n` +
+                        `從：${from}\n到：${to}`,
+                    success: "✅ 位置已更新",
+                    noteTo: (qty, loc) => `移動 ${qty} 到 ${loc}`,
+                    noteFrom: (qty, loc) => `從 ${loc} 移動 ${qty}`
+                }
+            };
+
             let allConsumables = [];
+            let currentPage = 1;
+            const PAGE_SIZE = 7;
+            let filteredConsumables = [];
 
             import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
-            import { getFirestore, collection, getDocs, query, orderBy, where}
+            import { getFirestore, collection, getDocs, query, orderBy, where, addDoc}
                 from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
             const firebaseConfig = {
@@ -361,7 +410,7 @@
 
             /* ===== LOAD DATA ===== */
             async function loadConsumables() {
-                tableBody.innerHTML = "<tr><td colspan='7'>Loading...</td></tr>";
+                tableBody.innerHTML = "<tr><td colspan='8'>Loading...</td></tr>";
 
                 try {
                     const q = query(collection(db, "consumables"));
@@ -391,8 +440,11 @@
 
                         stockMap[key].qty += Number(d.qty) || 0;
 
-                        // 👇 lấy hành động mới nhất
-                        if (!stockMap[key].lastActionAt || d.actionAt > stockMap[key].lastActionAt) {
+                        // 👇 lấy hành động mới nhất (GIỮ NGUYÊN FIELD)
+                        if (
+                            !stockMap[key].lastActionAt ||
+                            d.actionAt > stockMap[key].lastActionAt
+                        ) {
                             stockMap[key].lastActionAt = d.requestedAt;
                             stockMap[key].lastActionBy = d.requestedBy;
                             stockMap[key].lastAction = d.type;
@@ -402,26 +454,37 @@
                     allConsumables = Object.values(stockMap)
                         .filter(i => i.qty !== 0); // chỉ hiện còn tồn
 
-                    renderTable(allConsumables);
+                    filteredConsumables = allConsumables;
+                    currentPage = 1;
+                    renderTable(filteredConsumables);
 
                 } catch (e) {
                     console.error(e);
                     tableBody.innerHTML =
-                        "<tr><td colspan='6'>Load failed</td></tr>";
+                        "<tr><td colspan='8'>Load failed</td></tr>";
                 }
             }
+
 
             /* ===== RENDER ===== */
             function renderTable(data) {
                 tableBody.innerHTML = "";
+                const isAdmin = !!localStorage.getItem("adminLogin");
 
                 if (!data.length) {
                     tableBody.innerHTML =
-                        "<tr><td colspan='7'>No stock</td></tr>";
+                        "<tr><td colspan='8'>No stock</td></tr>";
+                    document.getElementById("pagination").style.display = "none";
                     return;
                 }
 
-                data.forEach(d => {
+                const totalPages = Math.ceil(data.length / PAGE_SIZE);
+                if (currentPage > totalPages) currentPage = totalPages;
+
+                const start = (currentPage - 1) * PAGE_SIZE;
+                const pageData = data.slice(start, start + PAGE_SIZE);
+
+                pageData.forEach(d => {
                     const tr = document.createElement("tr");
                     tr.innerHTML = `
                         <td>${d.code}</td>
@@ -431,9 +494,16 @@
                         <td>${d.lastActionAt || ""}</td>
                         <td>${d.lastActionBy || ""}</td>
                         <td>${d.location}</td>
+                        <td>${isAdmin ? `<span style="cursor:pointer;margin-left:6px;"onclick='changeLocation(${JSON.stringify(d)})'>✏️</span>` : ""}</td>
                     `;
                     tableBody.appendChild(tr);
                 });
+
+                document.getElementById("pagination").style.display =
+                    totalPages > 1 ? "block" : "none";
+
+                document.getElementById("pageInfo").innerText =
+                    `Page ${currentPage} / ${totalPages}`;
             }
 
 
@@ -443,15 +513,16 @@
                 const nameVal = filterName.value.toLowerCase();
                 const byVal   = filterBy.value.toLowerCase();
 
-                const filtered = allConsumables.filter(d => {
+                filteredConsumables = allConsumables.filter(d => {
                     return (
                         (!codeVal || d.code.toLowerCase().includes(codeVal)) &&
                         (!nameVal || d.name.toLowerCase().includes(nameVal)) &&
-                        (!byVal   || (d.by || "").toLowerCase().includes(byVal))
+                        (!byVal   || (d.lastActionBy || "").toLowerCase().includes(byVal))
                     );
                 });
 
-                renderTable(filtered);
+                currentPage = 1;
+                renderTable(filteredConsumables );
             }
 
 
@@ -459,6 +530,137 @@
             filterCode.addEventListener("input", applyFilter);
             filterName.addEventListener("input", applyFilter);
             filterBy.addEventListener("input", applyFilter);
+
+            window.changeLocation = async function (item) {
+
+                const lang = localStorage.getItem("lang") || "en";
+                const t = i18n[lang];
+
+                // Input new Location
+                const newLoc = prompt(
+                    `${t.moveTitle(item.code, item.name)}\n` +
+                    t.currentLoc(item.location),
+                    item.location
+                );
+
+                if (!newLoc || newLoc === item.location) return;
+
+                // Input Qty
+                const qtyInput = prompt(
+                    t.qtyPrompt(item.qty),
+                    item.qty
+                );
+
+                const moveQty = Number(qtyInput);
+
+                // Validate Qty
+                if (
+                    !Number.isFinite(moveQty) ||
+                    moveQty <= 0 ||
+                    moveQty > item.qty
+                ) {
+                    alert(t.invalidQty);
+                    return;
+                }
+
+                // Confirm
+                if (!confirm(
+                    t.confirmMove(
+                        moveQty,
+                        item.qty,
+                        item.code,
+                        item.name,
+                        item.location,
+                        newLoc
+                    )
+                )) return;
+
+                const admin = localStorage.getItem("adminLogin");
+
+                // 5️⃣ Trừ kho cũ
+                await addDoc(collection(db, "consumables"), {
+                    code: item.code,
+                    name: item.name,
+                    qty: -Math.abs(moveQty),
+                    type: "MOVE_OUT",
+                    location: item.location,
+                    
+                    actionBy: admin,
+                    actionAt: getVNDateString(),
+                    
+                    requestedBy: admin,
+                    requestedAt: getVNDateString(),
+
+                    note: t.noteTo(moveQty, newLoc)
+                });
+
+                // 6️⃣ Cộng kho mới
+                await addDoc(collection(db, "consumables"), {
+                    code: item.code,
+                    name: item.name,
+                    qty: Math.abs(moveQty),
+                    type: "MOVE_IN",
+                    location: newLoc,
+                    
+                    actionBy: admin,
+                    actionAt: getVNDateString(),
+                    
+                    requestedBy: admin,
+                    requestedAt: getVNDateString(),
+
+                    note: t.noteFrom(moveQty, item.location)
+                });
+
+                alert(t.success);
+                loadConsumables();
+            };
+
+
+            function getVNDateString() {
+                // const now = new Date();
+                const parts = new Intl.DateTimeFormat("en-CA", {
+                timeZone: "Asia/Ho_Chi_Minh",
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+                hour12: false
+              }).formatToParts(new Date());
+
+              const get = t => parts.find(p => p.type === t).value;
+
+              return `${get("year")}/${get("month")}/${get("day")} ${get("hour")}:${get("minute")}:${get("second")}`;
+            }
+            
+
+            function getTodayVN() {
+                const now = new Date();
+                const vn = new Date(now.getTime() + 7 * 60 * 60 * 1000);
+
+                const y = vn.getUTCFullYear();
+                const m = String(vn.getUTCMonth() + 1).padStart(2, "0");
+                const d = String(vn.getUTCDate()).padStart(2, "0");
+
+                return `${y}-${m}-${d}`;
+            }
+
+            window.nextPage = function () {
+                const totalPages = Math.ceil(filteredConsumables.length / PAGE_SIZE);
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    renderTable(filteredConsumables);
+                }
+            };
+
+            window.prevPage = function () {
+                if (currentPage > 1) {
+                    currentPage--;
+                    renderTable(filteredConsumables);
+                }
+            };
+
 
             loadConsumables();
         </script>

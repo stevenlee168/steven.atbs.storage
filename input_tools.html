@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Import Consumables</title>
+    <title>Import Tools</title>
 
     <style>
         body {
@@ -212,14 +212,12 @@
 
         <div class="form-group">
             <label data-i18n="code"></label>
-            <div style="position:relative"><input type="text" id="code"><span id="codeLock" style=" position:absolute; right:10px; top:50%; transform:translateY(-50%); display:none;">🔒</span>
-            <div id="codeHint" style="font-size:12px;color:#888;margin-top:4px;"></div>
+            <input type="text" id="code">
         </div>
 
         <div class="form-group">
             <label data-i18n="name"></label>
-            <div style="position:relative"><input type="text" id="name"><span id="nameLock" style=" position:absolute; right:10px; top:50%; transform:translateY(-50%); display:none;">🔒</span>
-            <div id="nameHint" style="font-size:12px;color:#888;margin-top:4px;"></div>
+            <input type="text" id="name">
         </div>
 
         <div class="form-group">
@@ -243,20 +241,17 @@
         </div>
 
         <div class="form-actions">
-            <button onclick="sendConsumable()" data-i18n="send"></button>
-            <button onclick="location.href='index_consumables.html'" data-i18n="back"></button>
+            <button onclick="sendTool()" data-i18n="send"></button>
+            <button onclick="location.href='index_tools.html'" data-i18n="back"></button>
         </div>
     </div>
 
     <!-- ===== JS ===== -->
     <script>
-        // ===== GLOBAL CACHE =====
-        window.existingItems = [];
-        
         /* ===== TRANSLATIONS ===== */
         const translations = {
             en: {
-                title: "Import Consumables",
+                title: "Import Tools",
                 code: "Item Code",
                 name: "Item Name",
                 qty: "Quantity",
@@ -267,7 +262,7 @@
                 location: "Location",
             },
             zh: {
-                title: "耗材入庫",
+                title: "工具入庫",
                 code: "物料編號",
                 name: "物料名稱",
                 qty: "數量",
@@ -303,8 +298,8 @@
             });
         }
 
-        /* ===== SEND CONSUMABLE ===== */
-        function sendConsumable() {
+        /* ===== SEND TOOL ===== */
+        function sendTool() {
             const code = document.getElementById("code").value.trim();
             const name = document.getElementById("name").value.trim();
             const qty  = Number(document.getElementById("qty").value);
@@ -319,7 +314,7 @@
 
             const request = {
                 type: "IMPORT",
-                requestType: "CONSUMABLE",
+                requestType: "TOOL",
 
                 code,
                 name,
@@ -384,84 +379,12 @@
         }
 
 
-        document.getElementById("name").addEventListener("input", () => {
-            const codeInput = document.getElementById("code");
-            const nameInput = document.getElementById("name");
-
-            const codeLock = document.getElementById("codeLock");
-            const nameLock = document.getElementById("nameLock");
-            const hint = document.getElementById("nameHint");
-
-            // ❗ nếu name đang bị lock thì bỏ qua (tránh loop)
-            if (nameInput.readOnly) return;
-
-            const name = nameInput.value.trim();
-
-            if (!name || !window.existingItems.length) {
-                unlockInput(codeInput, codeLock);
-                return;
-            }
-
-            const match = window.existingItems.find(
-                i => i.name.toLowerCase() === name.toLowerCase()
-            );
-
-            if (match) {
-                hint.innerText = `ℹ Existing item: "${match.code}"`;
-                lockInput(codeInput, codeLock, match.code);
-            } else {
-                unlockInput(codeInput, codeLock);
-            }
-        });
-
-
-        document.getElementById("code").addEventListener("input", () => {
-            const codeInput = document.getElementById("code");
-            const nameInput = document.getElementById("name");
-
-            const codeLock = document.getElementById("codeLock");
-            const nameLock = document.getElementById("nameLock");
-            const hint = document.getElementById("codeHint");
-
-            const code = codeInput.value.trim();
-
-            if (!code || !window.existingItems.length) {
-                hint.innerText = "";
-                unlockInput(nameInput, nameLock);
-                return;
-            }
-
-            const match = window.existingItems.find(
-                i => i.code.toLowerCase() === code.toLowerCase()
-            );
-
-            if (match) {
-                hint.innerText = `ℹ Existing item: "${match.name}"`;
-                lockInput(nameInput, nameLock, match.name);
-            } else {
-                hint.innerText = "";
-                unlockInput(nameInput, nameLock);
-            }
-        });
-
-
-        function lockInput(input, lockIcon, value) {
-            input.value = value;
-            input.readOnly = true;
-            lockIcon.style.display = "inline";
-        }
-
-        function unlockInput(input, lockIcon) {
-            input.readOnly = false;
-            lockIcon.style.display = "none";
-        }
-
     </script>
 
     <script type="module">
         // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
-        import {getFirestore, collection, addDoc, getDocs} from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+        import {getFirestore, collection, addDoc} from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
         // TODO: Add SDKs for Firebase products that you want to use
         // https://firebase.google.com/docs/web/setup#available-libraries
@@ -491,24 +414,6 @@
             }
         };
 
-        window.loadExistingConsumables = async function () {
-            const snap = await getDocs(collection(db, "consumables"));
-            window.existingItems = [];
-
-            snap.forEach(doc => {
-                const d = doc.data();
-                if (d.code && d.name) {
-                    window.existingItems.push({
-                        code: d.code.trim(),
-                        name: d.name.trim()
-                    });
-                }
-            });
-        };
-
-        window.addEventListener("DOMContentLoaded", () => {
-            window.loadExistingConsumables();
-        });
 
     </script>
 

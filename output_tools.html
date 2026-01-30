@@ -2,7 +2,7 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
-        <title>Export Consumables</title>
+        <title>Export Tools</title>
 
         <style>
             body {
@@ -252,7 +252,7 @@
             <label data-i18n="date"></label>
             <input type="date" id="date" onkeydown="return false">
 
-            <button onclick="location.href='index_consumables.html'" data-i18n="back"></button>
+            <button onclick="location.href='index_tools.html'" data-i18n="back"></button>
         </div>
 
         <br />
@@ -262,7 +262,7 @@
         <script>
             const translations = {
                 en: {
-                    title: "Export Consumables",
+                    title: "Export Tools",
                     code: "Item Code",
                     name: "Item Name",
                     stock: "Stock",
@@ -274,7 +274,7 @@
                     location: "Location",
                 },
                 zh: {
-                    title: "耗材出庫",
+                    title: "工具領用/出庫",
                     code: "物料編號",
                     name: "物料名稱",
                     stock: "庫存",
@@ -377,7 +377,7 @@
             let stockMap = {};
 
             async function loadStock() {
-                const snap = await getDocs(collection(db, "consumables"));
+                const snap = await getDocs(collection(db, "tools"));
                 stockMap = {};
 
                 snap.forEach(doc => {
@@ -466,7 +466,7 @@
 
                 await addDoc(collection(db, "requests"), {
                     type: "EXPORT",
-                    requestType: "CONSUMABLE",
+                    requestType: "TOOL",
 
                     code: item.code,
                     name: item.name,

@@ -268,14 +268,20 @@
             </table>
         </div>
 
+        <div id="pagination" style="margin-top:15px;text-align:center;">
+            <button onclick="prevPage()">◀ Prev</button>
+            <span id="pageInfo" style="margin:0 10px;"></span>
+            <button onclick="nextPage()">Next ▶</button>
+        </div>
+
+
         <div class="actions">
             <button onclick="logout()" data-i18n="logout_btn"></button>
-            <button onclick="location.href='index.html'" data-i18n="back_btn"></button>
+            <button onclick="location.href='index_admin.html'" data-i18n="back_btn"></button>
         </div>
 
 
         <script type="module">
-
             /* ===== FIREBASE ===== */
             import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
             import {
@@ -308,7 +314,9 @@
             const filterBy   = document.getElementById("filterBy");
 
             let allData = [];
-
+            let currentPage = 1;
+            const PAGE_SIZE = 7;
+                        
             window.login = async function () {
                 const user = document.getElementById("loginUser").value.trim();
                 const pass = document.getElementById("loginPass").value.trim();
@@ -355,7 +363,8 @@
                 snap.forEach(d => {
                     allData.push({ id: d.id, ...d.data() });
                 });
-
+                
+                currentPage = 1; // ✅ reset page
                 render(allData);
             }
 
@@ -366,10 +375,17 @@
                 if (!data.length) {
                     tableBody.innerHTML =
                     "<tr><td colspan='7'>No pending requests</td></tr>";
+                    document.getElementById("pagination").style.display = "none";
                     return;
                 }
 
-                data.forEach(d => {
+                const totalPages = Math.ceil(data.length / PAGE_SIZE);
+                if (currentPage > totalPages) currentPage = totalPages;
+
+                const start = (currentPage - 1) * PAGE_SIZE;
+                const pageData = data.slice(start, start + PAGE_SIZE);
+
+                pageData.forEach(d => {
                     const tr = document.createElement("tr");
                     tr.innerHTML = `
                         <td>${d.code}</td>
@@ -386,6 +402,13 @@
                     tableBody.appendChild(tr);
                 });
 
+                // ===== pagination info =====
+                document.getElementById("pagination").style.display =
+                    totalPages > 1 ? "block" : "none";
+
+                document.getElementById("pageInfo").innerText =
+                    `Page ${currentPage} / ${totalPages}`;
+
                 setLanguage(localStorage.getItem("lang") || "en", false);
             }
 
@@ -395,11 +418,14 @@
                 const n = filterName.value.toLowerCase();
                 const b = filterBy.value.toLowerCase();
 
-                render(allData.filter(d =>
+                const filtered = allData.filter(d =>
                     (!c || d.code.toLowerCase().includes(c)) &&
                     (!n || d.name.toLowerCase().includes(n)) &&
                     (!b || d.requestedBy.toLowerCase().includes(b))
-                ));
+                );
+
+                currentPage = 1; // ✅ reset page
+                render(filtered);
             }
 
 
@@ -456,6 +482,22 @@
 
                 loadPending();
             };
+
+            window.nextPage = function () {
+                const totalPages = Math.ceil(allData.length / PAGE_SIZE);
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    render(allData);
+                }
+            };
+
+            window.prevPage = function () {
+                if (currentPage > 1) {
+                    currentPage--;
+                    render(allData);
+                }
+            };
+
 
 
             loadPending();
