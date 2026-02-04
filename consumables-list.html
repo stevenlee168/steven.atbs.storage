@@ -99,6 +99,40 @@
                 color: white;
             }
 
+            /* ===== REQUEST TYPE SWITCH ===== */
+            .type-switch {
+                display: flex;
+                justify-content: center;
+                gap: 12px;
+                margin-bottom: 15px;
+            }
+
+            .type-switch button {
+                padding: 8px 20px;
+                border-radius: 20px;
+                border: 2px solid #007bff;
+                background: white;
+                font-weight: bold;
+                cursor: pointer;
+            }
+
+            .type-switch button.active {
+                background: #007bff;
+                color: white;
+            }
+
+            .type-switch button.inactive {
+                border-color: #ccc;
+                color: #999;
+                background: #f3f3f3;
+            }
+
+            .type-switch button.inactive:hover {
+                background: #f3f3f3;
+                color: #999;
+                cursor: pointer;
+            }
+
             /* ===== LANGUAGE SWITCH ===== */
             .lang-switch {
                 position: fixed;
@@ -224,6 +258,11 @@
 
         <h2 data-i18n="title"></h2>
 
+        <div class="type-switch">
+            <button id="btnConsumable" data-i18n="btn_consumable" class="active"></button>
+            <button id="btnTool" data-i18n="btn_tool" class="inactive"></button>
+        </div>
+
         <div class="table-container">
             <div class="filter-bar">
                 <input
@@ -270,7 +309,7 @@
             </div>
         </div>
 
-        
+
         <div class="actions">
             <button
                 onclick="location.href='index_admin.html'"
@@ -282,7 +321,7 @@
         <script>
             const translations = {
                 en: {
-                    title: "Consumables Inventory",
+                    title: "Inventory",
                     th_code: "Item Code",
                     th_name: "Item Name",
                     th_qty: "Quantity",
@@ -292,9 +331,11 @@
                     // cf_by: "Confirmed By",
                     th_location: "Location",
                     back:"Back",
+                    btn_consumable: "Consumable",
+                    btn_tool: "Tool",
                 },
                 zh: {
-                    title: "耗材庫存",
+                    title: "庫存",
                     th_code: "物料編號",
                     th_name: "物料名稱",
                     th_qty: "數量",
@@ -304,6 +345,8 @@
                     // cf_by: "確認人員",
                     th_location: "存放位置",
                     back:"返回",
+                    btn_consumable: "耗材",
+                    btn_tool: "工具",
                 }
             };
 
@@ -340,10 +383,17 @@
             /* ===== INIT ===== */
             document.addEventListener("DOMContentLoaded", () => {
                 initLanguage();
+                setActiveTypeButton();
+                loadInventory();
             });
         </script>
 
         <script type="module">
+            let currentItemType = "CONSUMABLE"; // mặc định
+            const btnConsumable = document.getElementById("btnConsumable");
+            const btnTool = document.getElementById("btnTool");
+
+
             // "en" | "zh"
             const i18n = {
                 en: {
@@ -381,10 +431,10 @@
                 }
             };
 
-            let allConsumables = [];
+            let allItems = [];
             let currentPage = 1;
-            const PAGE_SIZE = 7;
-            let filteredConsumables = [];
+            const PAGE_SIZE = 5;
+            let filteredItems = [];
 
             import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
             import { getFirestore, collection, getDocs, query, orderBy, where, addDoc}
@@ -409,11 +459,13 @@
             const filterBy   = document.getElementById("filterBy");
 
             /* ===== LOAD DATA ===== */
-            async function loadConsumables() {
+            async function loadInventory() {
                 tableBody.innerHTML = "<tr><td colspan='8'>Loading...</td></tr>";
 
                 try {
-                    const q = query(collection(db, "consumables"));
+                    const collectionName = currentItemType === "TOOL" ? "tools" : "consumables";
+
+                    const q = query(collection(db, collectionName));
                     const snapshot = await getDocs(q);
 
                     const stockMap = {};
@@ -451,12 +503,12 @@
                         }
                     });
 
-                    allConsumables = Object.values(stockMap)
+                    allItems = Object.values(stockMap)
                         .filter(i => i.qty !== 0); // chỉ hiện còn tồn
 
-                    filteredConsumables = allConsumables;
+                    filteredItems = allItems;
                     currentPage = 1;
-                    renderTable(filteredConsumables);
+                    renderTable(filteredItems);
 
                 } catch (e) {
                     console.error(e);
@@ -513,7 +565,7 @@
                 const nameVal = filterName.value.toLowerCase();
                 const byVal   = filterBy.value.toLowerCase();
 
-                filteredConsumables = allConsumables.filter(d => {
+                filteredItems = allItems.filter(d => {
                     return (
                         (!codeVal || d.code.toLowerCase().includes(codeVal)) &&
                         (!nameVal || d.name.toLowerCase().includes(nameVal)) &&
@@ -522,7 +574,7 @@
                 });
 
                 currentPage = 1;
-                renderTable(filteredConsumables );
+                renderTable(filteredItems );
             }
 
 
@@ -576,9 +628,10 @@
                 )) return;
 
                 const admin = localStorage.getItem("adminLogin");
+                const targetCollection = currentItemType === "TOOL" ? "tools" : "consumables";
 
                 // 5️⃣ Trừ kho cũ
-                await addDoc(collection(db, "consumables"), {
+                await addDoc(collection(db, targetCollection), {
                     code: item.code,
                     name: item.name,
                     qty: -Math.abs(moveQty),
@@ -595,7 +648,7 @@
                 });
 
                 // 6️⃣ Cộng kho mới
-                await addDoc(collection(db, "consumables"), {
+                await addDoc(collection(db, targetCollection), {
                     code: item.code,
                     name: item.name,
                     qty: Math.abs(moveQty),
@@ -612,7 +665,7 @@
                 });
 
                 alert(t.success);
-                loadConsumables();
+                loadInventory();
             };
 
 
@@ -647,22 +700,48 @@
             }
 
             window.nextPage = function () {
-                const totalPages = Math.ceil(filteredConsumables.length / PAGE_SIZE);
+                const totalPages = Math.ceil(filteredItems.length / PAGE_SIZE);
                 if (currentPage < totalPages) {
                     currentPage++;
-                    renderTable(filteredConsumables);
+                    renderTable(filteredItems);
                 }
             };
 
             window.prevPage = function () {
                 if (currentPage > 1) {
                     currentPage--;
-                    renderTable(filteredConsumables);
+                    renderTable(filteredItems);
                 }
             };
 
+            document.getElementById("btnConsumable").addEventListener("click", () => {
+                if (currentItemType === "CONSUMABLE") return;
 
-            loadConsumables();
+                currentItemType = "CONSUMABLE";
+                setActiveTypeButton();
+                loadInventory();
+            });
+
+            document.getElementById("btnTool").addEventListener("click", () => {
+                if (currentItemType === "TOOL") return;
+
+                currentItemType = "TOOL";
+                setActiveTypeButton();
+                loadInventory();
+            });
+
+            function setActiveTypeButton() {
+                const isConsumable = currentItemType === "CONSUMABLE";
+
+                btnConsumable.classList.toggle("active", isConsumable);
+                btnConsumable.classList.toggle("inactive", !isConsumable);
+
+                btnTool.classList.toggle("active", !isConsumable);
+                btnTool.classList.toggle("inactive", isConsumable);
+            }
+
+
+            loadInventory();
         </script>
     </body>
 </html>

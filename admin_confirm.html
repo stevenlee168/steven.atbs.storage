@@ -118,6 +118,40 @@
                 color: white;
             }
 
+            /* ===== REQUEST TYPE SWITCH ===== */
+            .type-switch {
+                display: flex;
+                justify-content: center;
+                gap: 12px;
+                margin-bottom: 15px;
+            }
+
+            .type-switch button {
+                padding: 8px 20px;
+                border-radius: 20px;
+                border: 2px solid #007bff;
+                background: white;
+                font-weight: bold;
+                cursor: pointer;
+            }
+
+            .type-switch button.active {
+                background: #007bff;
+                color: white;
+            }
+
+            .type-switch button.inactive {
+                border-color: #ccc;
+                color: #999;
+                background: #f3f3f3;
+            }
+
+            .type-switch button.inactive:hover {
+                background: #f3f3f3;
+                color: #999;
+                cursor: pointer;
+            }
+
 
             /* ===== LANGUAGE SWITCH ===== */
             .lang-switch {
@@ -239,7 +273,12 @@
             </div>
         </div>
 
-        <h2>Admin Confirm – Pending Consumables</h2>
+        <h2>Admin Confirm – Pending Requests</h2>
+        <div class="type-switch">
+            <button id="btnConsumable" data-i18n="btn_consumable" class="active"></button>
+            <button id="btnTool" data-i18n="btn_tool" class="inactive"></button>
+        </div>
+
 
         <div class="table-container">
             <div class="filter-bar">
@@ -282,6 +321,8 @@
 
 
         <script type="module">
+            let currentRequestType = "CONSUMABLE";
+
             /* ===== FIREBASE ===== */
             import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
             import {
@@ -346,7 +387,7 @@
                 localStorage.setItem("adminName", admin.name || admin.username);
 
                 document.getElementById("loginBox").style.display = "none";
-            
+                
                 loadPending();
             };
 
@@ -354,7 +395,7 @@
                 const q = query(
                     collection(db, "requests"),
                     where("status", "==", "pending"),
-                    where("requestType", "==", "CONSUMABLE")
+                    where("requestType", "==", currentRequestType)
                 );
 
                 const snap = await getDocs(q);
@@ -436,8 +477,10 @@
             window.approve = async (requestId, req) => {
                 if (!checkAdminSession()) return;
 
+                const targetCollection = req.requestType === "TOOL" ? "tools" : "consumables";
+
                 // 1️⃣ Ghi ledger kho
-                await addDoc(collection(db, "consumables"), {
+                await addDoc(collection(db, targetCollection), {
                     code: req.code,
                     name: req.name,
 
@@ -498,7 +541,44 @@
                 }
             };
 
+            document.getElementById("btnConsumable").addEventListener("click", () => {
+                if (currentRequestType === "CONSUMABLE") return;
 
+                currentRequestType = "CONSUMABLE";
+                setActiveTypeButton();
+                loadPending();
+            });
+
+            document.getElementById("btnTool").addEventListener("click", () => {
+                if (currentRequestType === "TOOL") return;
+
+                currentRequestType = "TOOL";
+                setActiveTypeButton();
+                loadPending();
+            });
+
+            function setActiveTypeButton() {
+                const isConsumable = currentRequestType === "CONSUMABLE";
+
+                const btnC = document.getElementById("btnConsumable");
+                const btnT = document.getElementById("btnTool");
+
+                btnC.classList.toggle("active", isConsumable);
+                btnC.classList.toggle("inactive", !isConsumable);
+
+                btnT.classList.toggle("active", !isConsumable);
+                btnT.classList.toggle("inactive", isConsumable);
+            }
+
+            /* ===== INIT ===== */
+            document.addEventListener("DOMContentLoaded", () => {
+                initLanguage();
+
+                if (!checkAdminSession()) return;
+
+                setActiveTypeButton();
+                loadPending();
+            });
 
             loadPending();
         </script>
@@ -518,6 +598,8 @@
                     th_by: "Request By",
                     th_location: "Location",
                     th_action: "Action",
+                    btn_consumable: "Consumable",
+                    btn_tool: "Tool",
                 },
                 zh: {
                     btn_approve: "核准",
@@ -531,6 +613,8 @@
                     th_by: "申請人員",
                     th_location: "存放位置",
                     th_action: "操作",
+                    btn_consumable: "耗材",
+                    btn_tool: "工具",
                 }
             };
 
@@ -595,16 +679,7 @@
 
                 return `${y}-${m}-${d}`;
             }
-
-            /* ===== INIT ===== */
-            document.addEventListener("DOMContentLoaded", () => {
-                initLanguage();
-
-                if (!checkAdminSession()) return;
-
-                loadPending();
-            });
-
+            
             function logout() {
                 localStorage.removeItem("adminLogin");
                 localStorage.removeItem("adminName");
@@ -631,6 +706,8 @@
 
                 return true;
             }
+
+
         </script>
     </body>
 </html>
